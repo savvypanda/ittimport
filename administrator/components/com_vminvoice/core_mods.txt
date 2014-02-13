@@ -1,0 +1,83 @@
+/administrator/components/com_vminvoice/models/invoices.php
+Added ability to filter by created_by and modified_by
+4 lines added in _buildQuery function:
+	- line 79  -	$created_by = JRequest::getVar('filter_created_by');
+	- line 80  -	$modified_by = JRequest::getVar('filter_modified_by');
+	- line 111 -	if(is_numeric($created_by)) $where[] = 'o.created_by = \''.$created_by.'\'';
+	- line 112 -	if(is_numeric($modified_by)) $where[] = 'o.modified_by = \''.$modified_by.'\'';
+	
+
+
+/administrator/components/com_vminvoice/controllers/order.php
+Add ability to set a return URL instead of just going back to invoices listing
+This function replaces the original save function:
+NEW
+
+    function save($apply = false)
+    {
+		
+		//hack IIT Books modified to return to page of choice by sending page
+		if (empty(JRequest::getCmd('return'))) :
+			$redirect = 'index.php?option=com_vminvoice&controller=invoices&task=editOrder&cid=' . $id;
+		else:
+			$redirect = base64_decode(JRequest::getCmd('return'));
+		endif;
+		
+		
+        $model = $this->getModel('order');
+        /* @var $model VMInvoiceModelOrder */
+        $id = $model->save(JRequest::get('post',4)); //4 = allow HTML
+        if ($apply)
+            $this->setRedirect($redirect, JText::_('COM_VMINVOICE_ORDER_SAVED'));
+        else
+            $this->cancel('Order saved');
+    }	
+ORIGINAL	
+    function save($apply = false)
+    {
+        $model = $this->getModel('order');
+        /* @var $model VMInvoiceModelOrder */
+        $id = $model->save(JRequest::get('post',4)); //4 = allow HTML
+        if ($apply)
+            $this->setRedirect(index.php?option=com_vminvoice&controller=invoices&task=editOrder&cid=' . $id, JText::_('COM_VMINVOICE_ORDER_SAVED'));
+        else
+            $this->cancel('Order saved');
+    }	
+
+
+/administrator/components/com_vminvoice/helpers/getter.php
+Completely refactored (simplified) getAjaxUserList function to fix a major performance problem on the site. If we ever upgrade VMInvoice, this will have to be gutted again.
+
+
+/administrator/components/com_vminvoice/models/invoices.php
+Removed the join to the #__vminvoice_mailsended table from the query, and all related field mentions
+Also added a condition to where clause to use the index on virtuemart_vendor_id to speed up the query:
+	$where[] = 'o.virtuemart_vendor_id="1"';
+
+
+/administrator/components/com_vminvoice/models/order.php
+Added code to update the order status on every edit
+in save function, on line 82
+NEW
+		//Added by Levi@SavvyPanda.com - track whether this is a new or existing order
+		$neworder = false;
+        if (!$vmorder->$orderIdCol) {
+			$neworder = true;
+			$vmorder->order_status = 'P'; //for new orders, add them as PENDING
+		}
+ORIGINAL
+        if (!$vmorder->$orderIdCol)
+			$vmorder->order_status = 'P'; //for new orders, add them as PENDING.
+AND in save function, on line 187
+NEW
+		//Added by Levi@SavvyPanda.com - include the name of the user who created/edited the order in the comments
+		$user = JFactory::getUser();
+        $this->updateState($vmorder->$orderIdCol,$data['status'],isset($data['notify']) ? $data['notify'] : 'N', 'Order '.(($neworder)?'created':'edited').' by '.$user->name, false, false);
+ORIGINAL
+        $this->updateState($vmorder->$orderIdCol,$data['status'],isset($data['notify']) ? $data['notify'] : 'N', '', false, false);
+AND in updateState function, on line 1321
+NEW
+		//OR (Added by Levi@SavvyPanda.com) if a comment was included
+		if ((isset($newStatus) AND $newStatus!=$order->order_status) OR ($notify=='YF') OR (!empty($comments)))
+ORIGINAL
+		if ((isset($newStatus) AND $newStatus!=$order->order_status) OR ($notify=='YF'))

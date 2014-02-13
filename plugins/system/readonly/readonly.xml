@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5" type="plugin" method="upgrade" group="system">
+	<name>System - Readonly Admin</name>
+	<author>Mango Tree Media</author>
+	<creationDate>April 2013</creationDate>
+	<copyright></copyright>
+	<license></license>
+	<authorEmail>tech@mangotreemedia.com</authorEmail>
+	<authorUrl>http://www.mangotreemedia.com</authorUrl>
+	<version>1.0.0</version>
+	<description>Allows a usergroup to be specified as read-only in the administrator interface.</description>
+	<files>
+		<filename plugin="readonly">readonly.php</filename>
+		<filename>index.html</filename>
+	</files>
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field name="readonly_group" type="usergroup" label="Readonly Group" description="The usergroup to mark as readonly" />
+				<field name="extra_denied_tasks" type="textarea" label="Extra Denied Tasks" description="Extra tasks that you would like to block, each on a new line. This is in addition to the following tasks: save, apply, add, edit, delete, new, update, and remove." />
+				<field name="extra_denied_requests" type="textarea" label="Extra Denied Requests" description="Extra requests that you would like to block, each on a new line.\n
+					Each request may have multiple comma-separated arguments.\n
+					You may denote a specific value to be blocked using the '=' sign. If no value is included, any request with that variable will be denied (eg: 'option=com_vminvoice,view=invoice,update')" />
+				<field name="readonly_exceptions" type="textarea" label="Exceptions" description="Exceptions to the readonly limitations. Uses the same format as the Extra Denied Requests.\n
+					Note that if a request is both denied and allowed according to these rules, the request will be allowed." />
+			</fieldset>
+		</fields>
+	</config>
+</extension>

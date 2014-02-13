@@ -1,0 +1,44 @@
+/administrator/components/com_virtuemart/models/orders.php
+Added call to plugin method vmorders::plgVmOnUpdateSingleItem($old_data,$new_data)
+12 lines added in updateSingleItem function, starting on line 291:
+	JPluginHelper::importPlugin('vmpayment');
+ 	$dispatcher = JDispatcher::getInstance();
+ 	$returnValues = $dispatcher->trigger('plgVmOnUpdateSingleItem',array($table,&$orderdata));
+	if(!empty($returnValues)) {
+		foreach($returnValues as $returned) {
+			if($returned === false) return; //we do not want to continue changing the status on this item
+			if(is_string($returned)) { //output the return value as an error, and do not change the status on the item
+				vmError($returned);
+				return false;
+			}
+		}
+	}
+
+
+/administrator/components/com_virtuemart/tables/products.php
+Added override to bindChecknStoreNoLang function, starting on line 132:
+	function bindChecknStoreNoLang(&$data,$preload=false) {
+		if(is_array($data)) {
+			$update_name = isset($data['product_name']) && isset($data['virtuemart_product_id']);
+			if($update_name) {
+				$new_product_name = $data['product_name'];
+				$new_product_id = $data['virtuemart_product_id'];
+			}
+		} else {
+			$update_name = isset($data->product_name) && isset($data->virtuemart_product_id);
+			if($update_name) {
+				$new_product_name = $data->product_name;
+				$new_product_id = $data->virtuemart_product_id;
+			}
+		}
+
+		$returnval = parent::bindChecknStoreNoLang($data,$preload);
+
+		if($update_name) {
+			$this->_db->setQuery('UPDATE #__virtuemart_order_items SET order_item_name='.$this->_db->quote($new_product_name).'
+					  WHERE virtuemart_product_id='.$new_product_id.' AND order_status IN("A","D","C","M","P")');
+			$this->_db->query();
+		}
+
+		return $returnval;
+	}

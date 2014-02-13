@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<install version="1.5" type="plugin" group="vmpayment" >
+	<name>IttBooks Email Management</name>
+	<creationDate>April 2013</creationDate>
+	<author>Levi@MangoTreeMedia.com</author>
+	<authorUrl>http://www.mangotreemedia.com</authorUrl>
+	<copyright></copyright>
+	<license>http://www.gnu.org/licenses/gpl-2.0.html GNU/GPL</license>
+	<version>0.95</version>
+	<description>No payment, and customized email triggers.</description>
+	<files>
+		<filename plugin="ittbooks">ittbooks.php</filename>
+	</files>
+	<params addpath="/administrator/components/com_virtuemart/elements">
+		<param type="vmjpluginwarning" />
+		<param name="admingroups" type="usergroup" multiple="multiple" label="Manager Groups" description="Select the usergroups that are allowed to approve orders." />
+		<param name="approvalcategory" type="vmcategoriesmenu" label="Category Requiring Approval" description="Select the category that requires manager approval to order." />
+		<param name="status1" type="vmorderstate" scope="com_virtuemart" default="" label="Status1" description="Send an email when the status of an order is changed to this value" />
+		<param name="enabled1" type="radio" default="0" label="Enabled" description="">
+			<option value="0">JNo</option>
+			<option value="1">JYes</option>
+		</param>
+		<param name="email1" type="text" default="" label="Email Recipient1" description="Email address(es) to send the status change email to. If you want to send it to multiple addresses, separate them by commas." />
+		<param name="subject1" type="text" default="" label="Email Subject1" description="Subject for the status change email." />
+		<param name="message1" type="textarea" cols="40" rows="10" default="" label="Email Message1" description="Text for the email message. The following variables will be substituted in the email: {PERSON_ID}, {ORDER_ID}, {STATUS}, {ORDER_LINK}" />
+		<param name="status2" type="vmorderstate" scope="com_virtuemart" default="" label="Status2" description="Send an email when the status of an order is changed to this value" />
+		<param name="enabled2" type="radio" default="0" label="Enabled" description="">
+			<option value="0">JNo</option>
+			<option value="1">JYes</option>
+		</param>
+		<param name="email2" type="text" default="" label="Email Recipient2" description="Email address(es) to send the status change email to. If you want to send it to multiple addresses, separate them by commas." />
+		<param name="subject2" type="text" default="" label="Email Subject2" description="Subject for the status change email." />
+		<param name="message2" type="textarea" cols="40" rows="10" default="" label="Email Message2" description="Text for the email message. The following variables will be substituted in the email: {PERSON_ID}, {ORDER_ID}, {STATUS}, {ORDER_LINK}" />
+		<param name="status3" type="vmorderstate" scope="com_virtuemart" default="" label="Status3" description="Send an email when the status of an order is changed to this value" />
+		<param name="enabled3" type="radio" default="0" label="Enabled" description="">
+			<option value="0">JNo</option>
+			<option value="1">JYes</option>
+		</param>
+		<param name="email3" type="text" default="" label="Email Recipient3" description="Email address(es) to send the status change email to. If you want to send it to multiple addresses, separate them by commas." />
+		<param name="subject3" type="text" default="" label="Email Subject3" description="Subject for the status change email." />
+		<param name="message3" type="textarea" cols="40" rows="10" default="" label="Email Message3" description="Text for the email message. The following variables will be substituted in the email: {PERSON_ID}, {ORDER_ID}, {STATUS}, {ORDER_LINK}" />
+		<param name="status4" type="vmorderstate" scope="com_virtuemart" default="" label="Status4" description="Send an email when the status of an order is changed to this value" />
+		<param name="enabled4" type="radio" default="0" label="Enabled" description="">
+			<option value="0">JNo</option>
+			<option value="1">JYes</option>
+		</param>
+		<param name="email4" type="text" default="" label="Email Recipient4" description="Email address(es) to send the status change email to. If you want to send it to multiple addresses, separate them by commas." />
+		<param name="subject4" type="text" default="" label="Email Subject4" description="Subject for the status change email." />
+		<param name="message4" type="textarea" cols="40" rows="10" default="" label="Email Message4" description="Text for the email message. The following variables will be substituted in the email: {PERSON_ID}, {ORDER_ID}, {STATUS}, {ORDER_LINK}" />
+		<param name="status5" type="vmorderstate" scope="com_virtuemart" default="" label="Status5" description="Send an email when the status of an order is changed to this value" />
+		<param name="enabled5" type="radio" default="0" label="Enabled" description="">
+			<option value="0">JNo</option>
+			<option value="1">JYes</option>
+		</param>
+		<param name="email5" type="text" default="" label="Email Recipient5" description="Email address(es) to send the status change email to. If you want to send it to multiple addresses, separate them by commas." />
+		<param name="subject5" type="text" default="" label="Email Subject5" description="Subject for the status change email." />
+		<param name="message5" type="textarea" cols="40" rows="10" default="" label="Email Message5" description="Text for the email message. The following variables will be substituted in the email: {PERSON_ID}, {ORDER_ID}, {STATUS}, {ORDER_LINK}" />
+	</params>
+</install>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+	<fieldset name="uploads" label="COM_ITTIMPORT_CONFIG_UPLOADS_LABEL" description="COM_ITTIMPORT_CONFIG_UPLOADS_DESCRIPTION">
+		<field name="uploads_enabled" type="list" label="Enable Uploads" description="Whether or not to allow files to be automatically imported into the system" default="0">
+			<option value="0">Disabled</option>
+			<option value="1">Enabled</option>
+		</field>
+		<field name="skip_product_category" label="Categories to Skip" description="VirtueMart categories to ignore when importing orders (specified as a comma-separated list of IDs)" default="" />
+		<field name="cron_username" type="text" label="COM_ITTIMPORT_CONFIG_CRON_USERNAME_LABEL" description="COM_ITTIMPOT_CONFIG_CRON_USERNAME_DESC" default="cron_user" />
+		<field name="cron_directory" type="text" label="COM_ITTIMPORT_CONFIG_CRON_DIRECTORY_LABEL" description="COM_ITTIMPORT_CONFIG_CRON_DIRECTORY_DESC" default="{SITE_ROOT}administrator/components/com_ittimport/uploads/" />
+		<field name="cron_filename" type="text" label="COM_ITTIMPORT_CONFIG_CRON_FILENAME_LABEL" description="COM_ITTIMPORT_CONFIG_CRON_FILENAME_DESCRIPTION" default="uploadfile.xml" />
+		<field name="archive_filename" type="text" label="COM_ITTIMPORT_CONFIG_ARCHIVE_FILENAME_LABEL" description="COM_ITTIMPORT_CONFIG_ARCHIVE_FILENAME_DESCRIPTION" default="{FILENAME_BASE}-{TIMESTAMP}.xml" />
+		<field name="archive_days" type="text" label="COM_ITTIMPORT_CONFIG_ARCHIVE_DAYS_LABEL" description="COM_ITTIMPORT_CONFIG_ARCHIVE_DAYS_DESCRIPTION" default="180" />
+		<field name="notify_admin" type="radio" label="COM_ITTIMPORT_CONFIG_NOTIFY_ADMIN_LABEL" description="COM_ITTIMPORT_CONFIG_NOTIFY_ADMIN_DESCRIPTION" default="0">
+			<option value="0">COM_ITTIMPORT_CONFIG_NOTIFY_ADMIN_NEVER</option>
+			<option value="1">COM_ITTIMPORT_CONFIG_NOTIFY_ADMIN_ON_ERROR</option>
+			<option value="2">COM_ITTIMPORT_CONFIG_NOTIFY_ADMIN_ALWAYS</option>
+		</field>
+		<field name="admin_emails" type="text" label="COM_ITTIMPORT_CONFIG_ADMIN_EMAILS_LABEL" description="COM_ITTIMPORT_CONFIG_ADMIN_EMAILS_DESCRIPTION" default="" />
+	</fieldset>
+	<fieldset name="shipping" label="Shipping Config" description="Settings for automatic status changes">
+		<field name="shipping_enabled" type="list" label="Enable Shipping" description="Whether or not to allow order statuses to be automatically changed to &quot;Ready to Ship&quot;" default="0">
+			<option value="0">Disabled</option>
+			<option value="1">Enabled</option>
+		</field>
+		<field name="virtual_product_category" label="Virtual Product Categories" description="Products in these VirtueMart categories will be removed from the order before the order is shipped (specified as a comma-separated list of IDs)" default="" />
+		<field name="high_cost_category" label="High Cost Categories" description="VirtueMart categories for high cost items that will not be shipped until their course start date (specified as a comma-separated list of IDs)" default="" />
+		<field name="cron_shipper" type="text" label="Shipper Username" description="The username of the user to use when automatically setting the order status to &quot;ready to ship&quot;. Do not use the same user as Cron User." default="cron_shipper" />
+		<field name="ship_x_days_before_course_starts" type="text" label="Days for Shipping" description="The number of days before an course starts to ship the orders for it" />
+		<field name="sent_cancelled_recipients" type="text" label="Too Late Recipient" description="The email address(es) to send a message to if an order needs to be cancelled after it has already been shipped" default="" />
+		<field name="sent_cancelled_subject" type="text" label="Too Late Subject" description="The subject for the email to be sent when an order needs to be cancelled after it has already been shipped" default="ITT Order Cancel Failure" />
+		<field name="sent_cancelled_message" type="textarea" label="Too Late Message" description="The message to include in the email to be sent when an order needs to be cancelled after it has already been shipped. You may use the same fields here that are used in the order status change emails, in addition to the {COURSE_NUM} field." default="" />
+	</fieldset>
+	<fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL" description="JCONFIG_PERMISSIONS_DESC">
+		<field name="rules" type="rules" label="JCONFIG_PERMISSIONS_LABEL" class="inputbox" validate="rules" filter="rules" component="com_ittimport" section="component" />
+	</fieldset>
+</config>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="2.5.0" method="upgrade">
+	<name>ITT Import</name>
+	<creationDate>April 2013</creationDate>
+	<author>Levi Carter</author>
+	<authorEmail>levi@mangotreemedia.com</authorEmail>
+	<authorUrl>http://www.mangotreemedia.com</authorUrl>
+	<copyright></copyright>
+	<license></license>
+	<version>0.9.95</version>
+	<description>The ITT Import component imports ITT's CSV person-orders changelog and uses it's contents to add, modify, and cancel VirtueMart orders.</description>
+	
+	<installfile>install.ittimport.php</installfile>
+	<scriptfile>script.ittimport.php</scriptfile>
+	<install>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+		</sql>
+	</install>
+	
+	<uninstall>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+		</sql>
+	</uninstall>
+	
+	<update>
+		<schemas>
+			<schemapath type="mysql">sql/updates/mysql</schemapath>
+		</schemas>
+	</update>
+	
+	<media destination="com_ittimport" folder="media">
+		<filename>index.html</filename>
+		<folder>images</folder>
+	</media>
+	
+	<files folder="site">
+		<filename>index.html</filename>
+	</files>
+
+	<administration>
+		<menu img="../media/com_ittimport/images/ittimport_16x16.png">ITT Import</menu>
+		<files folder="admin">
+			<filename>access.xml</filename>
+			<filename>config.xml</filename>
+			<filename>controller.php</filename>
+			<filename>helper.php</filename>
+			<filename>ittimport.php</filename>
+			<filename>index.html</filename>
+			<folder>upload</folder>
+			<folder>controllers</folder>
+			<folder>language</folder>
+			<folder>models</folder>
+			<folder>sql</folder>
+			<folder>views</folder>
+		</files>
+		<languages folder="admin">
+			<language tag="en-GB">language/en-GB/en-GB.com_ittimport.ini</language>
+			<language tag="en-GB">language/en-GB/en-GB.com_ittimport.sys.ini</language>
+		</languages>
+	</administration>
+</extension>
