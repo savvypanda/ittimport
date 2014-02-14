@@ -73,8 +73,8 @@ class IttImportControllerUpload extends JController {
 		
 		//If the upload was successful, display success page. If not, display error message.
 		if($success !== false) {
-			//$this->setRedirect('index.php?option=com_ittimport&view=details&id='.$reporterModel->getUploadId(),JText::_('COM_ITTIMPORT_UPLOAD_SUCCESSFULL'));
-			JFactory::getApplication()->enqueueMessage(JText::_('COM_ITTIMPORT_UPLOAD_SUCCESSFULL'));
+			$this->setRedirect('index.php?option=com_ittimport&view=details&id='.$reporterModel->getUploadId(),JText::_('COM_ITTIMPORT_UPLOAD_SUCCESSFULL'));
+			//JFactory::getApplication()->enqueueMessage(JText::_('COM_ITTIMPORT_UPLOAD_SUCCESSFULL'));
 		} else {
 			JError::raiseWarning(499, JText::sprintf('COM_ITTIMPORT_ERROR_PROCESSING',$uploadfile['name']));
 		}

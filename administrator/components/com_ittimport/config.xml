@@ -24,7 +24,6 @@
 			<option value="1">Enabled</option>
 		</field>
 		<field name="virtual_product_category" label="Virtual Product Categories" description="Products in these VirtueMart categories will be removed from the order before the order is shipped (specified as a comma-separated list of IDs)" default="" />
-		<field name="high_cost_category" label="High Cost Categories" description="VirtueMart categories for high cost items that will not be shipped until their course start date (specified as a comma-separated list of IDs)" default="" />
 		<field name="cron_shipper" type="text" label="Shipper Username" description="The username of the user to use when automatically setting the order status to &quot;ready to ship&quot;. Do not use the same user as Cron User." default="cron_shipper" />
 		<field name="ship_x_days_before_course_starts" type="text" label="Days for Shipping" description="The number of days before an course starts to ship the orders for it" />
 		<field name="sent_cancelled_recipients" type="text" label="Too Late Recipient" description="The email address(es) to send a message to if an order needs to be cancelled after it has already been shipped" default="" />

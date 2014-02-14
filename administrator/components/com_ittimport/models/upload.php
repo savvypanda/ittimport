@@ -9,22 +9,20 @@ if(!class_exists('VirtuemartModelUser')) require_once(JPATH_VM_ADMINISTRATOR.DS.
 if(!class_exists('VirtueMartModelOrders')) require_once(JPATH_VM_ADMINISTRATOR.DS.'models'.DS.'orders.php');
 if(!class_exists('VirtueMartCart')) require_once(JPATH_VM_SITE.DS.'helpers'.DS.'cart.php');
 
-	/*
-	 * IttImport Upload model
-	 *
-	 */
+/*
+ * IttImport Upload model
+ *
+ */
 class IttImportModelUpload extends JModel {
 	private $reporter;
 	private $user_id;
 	private $newusergroup;
-	private $ship_cutoff;
+	//private $ship_cutoff;
 	private $categories_to_skip;
-	private $high_cost_categories;
 
 	private $jusers = array();
 	private $vcountries = array();
 	private $vstates = array();
-	private $products = array();
 	private $courses = array();
 
 	private $row = 0;
@@ -46,7 +44,6 @@ class IttImportModelUpload extends JModel {
 		'email' => 'email',
 		'course_no' => 'course',
 		'course_start_date' => 'course_start_date',
-		'term_name' => 'term_date',
 		'cancellation' => 'cancelled',
 		'order_date' => 'ordered_on'
 	);
@@ -63,14 +60,7 @@ class IttImportModelUpload extends JModel {
 	public function __construct($config = array()) {
 		parent::__construct($config);
 		$params = JComponentHelper::getParams('com_ittimport');
-		$this->high_cost_categories = explode(',',str_replace(' ','',$params->get('high_cost_category')));
 		$this->categories_to_skip = explode(',',str_replace(' ','',$params->get('skip_product_category','')));
-		$this->ship_cutoff = strtotime('+'.$params->get('ship_x_days_before_course_starts',0).' days');
-
-		//if(!empty($this->categories_to_skip)) {
-		//	$this->_db->setQuery('SELECT virtuemart_product_id FROM #__virtuemart_product_categories WHERE virtuemart_category_id IN('.implode(',',$this->categories_to_skip).')');
-		//	$this->products_to_exclude = $this->_db->loadColumn();
-		//}
 	}
 
 
@@ -223,14 +213,6 @@ class IttImportModelUpload extends JModel {
 			}
 		}
 
-		//validate the required fields here
-		/* $requiredfields = array('country');
-		foreach($requiredfields as $field) {
-			if(empty($record->$field)) {
-				return JText::_('COM_ITTIMPORT_'.strtoupper($field).'_MISSING');
-			}
-		} */
-
 		//now add the elements that we can find but that are not in the XML file
 		//starting with the relevant product IDs for the course
 		$result = $this->getProductIds($newrecord->course);
@@ -291,16 +273,7 @@ class IttImportModelUpload extends JModel {
 	private function getProductIds($course) {
 		//caching the course products for cheap improved performance
 		if(!array_key_exists($course, $this->courses)) {
-
-			$num_highcost_categories = count($this->high_cost_categories);
 			$num_exclude_categories = count($this->categories_to_skip);
-			if($num_highcost_categories == 0) {
-				$high_cost_subquery = 'FALSE';
-			} elseif($num_highcost_categories == 1) {
-				$high_cost_subquery = 'EXISTS(SELECT 1 FROM #__virtuemart_product_categories pc WHERE pc.virtuemart_product_id=p.virtuemart_product_id AND pc.virtuemart_category_id='.$this->high_cost_categories[0].')';
-			} else {
-				$high_cost_subquery = 'EXISTS(SELECT 1 FROM #__virtuemart_product_categories pc WHERE pc.virtuemart_product_id=p.virtuemart_product_id AND pc.virtuemart_category_id IN('.implode(',',$this->high_cost_categories).'))';
-			}
 			if($num_exclude_categories == 0) {
 				$category_exclude_subquery = '';
 			} elseif($num_exclude_categories == 1) {
@@ -309,7 +282,7 @@ class IttImportModelUpload extends JModel {
 				$category_exclude_subquery = 'AND NOT EXISTS(SELECT 1 FROM #__virtuemart_product_categories pce WHERE pce.virtuemart_product_id=p.virtuemart_product_id AND pce.virtuemart_category_id IN('.implode(',',$this->categories_to_skip).'))';
 			}
 
-			$query = 'SELECT DISTINCT p.virtuemart_product_id, '.$high_cost_subquery.' as high_cost_item '. /*, p.product_in_stock, p.product_ordered */
+			$query = 'SELECT DISTINCT p.virtuemart_product_id '. /*, p.product_in_stock, p.product_ordered */
 					  'FROM #__virtuemart_products p
 					  JOIN #__virtuemart_products_en_gb l ON p.virtuemart_product_id=l.virtuemart_product_id
 					  WHERE p.published=1 '.$category_exclude_subquery.'
@@ -319,16 +292,7 @@ class IttImportModelUpload extends JModel {
 			if($this->_db->getErrorMsg()) {
 				return $this->_db->getErrorMsg();
 			}
-			$results = $this->_db->loadAssocList();
-			$this->courses[$course] = array();
-			if(!empty($results)) foreach($results as $prodarray) {
-				$this->products[$prodarray['virtuemart_product_id']] = array(
-					'high_cost_item' => $prodarray['high_cost_item'],
-//					'product_in_stock' => $prodarray['product_in_stock'],
-//					'product_ordered' => $prodarray['product_ordered'],
-				);
-				$this->courses[$course][] = $prodarray['virtuemart_product_id'];
-			}
+			$this->courses[$course] = $this->_db->loadResultArray();
 		}
 		return $this->courses[$course];
 	}
@@ -396,37 +360,24 @@ class IttImportModelUpload extends JModel {
 	 * getOrder function: fetch the relevant VirtueMart orders for the given record, optionally creating it if it does not exist.
 	 *
 	 * Input: $record: The record you are fetching orders for.
-	 * Input: $create_if_not_exists: Whether or not to create a new order if we can't find one
 	 *
 	 * Returns a virtuemart order object for the given record.
 	 *  - The order should not have been shipped or returned, and should have the same course_start_date and user as the record
-	 *  - If no order can be found and create_if_not_exists is false, return false
+	 *  - If the order cannot be found or created, return false
 	 * Return an error string if you encounter any errors.
 	 */
 	private function getOrder($record) {
 		if(empty($record->studentid)) return 'no user';
 		if(empty($record->productids)) return 'no products';
-		if(empty($record->term_date)) return 'no term date';
 		if(empty($record->course_start_date)) return 'no course start date';
 
 		//Only orders with the following statuses should be returned:
 		//Waiting for approval, duplicate, pending, ready to be shipped, invalid address, and backordered
-		$acceptable_statuses = array('M'=>'"M"','D'=>'"D"','P'=>'"P"','C'=>'"C"','A'=>'"A"','B'=>'"B"');
-
-		$has_high_cost_item = false;
-		foreach($record->productids as $productid) {
-			if($this->products[$productid]['high_cost_item']==1) $has_high_cost_item = true;
-		}
-		$shipdate_subquery = 'customer_note LIKE "%[[SHIP_DATE: '.$record->course_start_date.']]%"';
-		if(!$has_high_cost_item && $record->course_start_date != $record->term_date) {
-			$shipdate_subquery = '( '.$shipdate_subquery.' OR customer_note LIKE "%[[SHIP_DATE: '.$record->term_date.']]%" )';
-		}
-
 		$sql = 'SELECT virtuemart_order_id
 			 FROM #__virtuemart_orders
-			 WHERE order_status IN ('.implode(',',$acceptable_statuses).')
+			 WHERE order_status IN ("M","D","P","C","A","B")
 			   AND virtuemart_user_id='.$this->_db->quote($record->studentid).'
-			   AND '.$shipdate_subquery.'
+			   AND customer_note LIKE "%[[SHIP_DATE: '.$record->course_start_date.']]%"
 			 ORDER BY virtuemart_order_id';
 		$this->_db->setQuery($sql);
 		$this->_db->query();
@@ -435,20 +386,19 @@ class IttImportModelUpload extends JModel {
 			$orderModel = VmModel::getModel('orders');
 			$orders = $this->_db->loadResultArray();
 			$order_to_return = false;
-			$order_ship_date = '';
 			$orders_with_this_course = array();
 			foreach($orders as $order_id) {
 				$order = $orderModel->getOrder($order_id);
 				//we want to return the order if:
 				//1. The order already contains this course
-				//2. It is for the latest valid ship date UNLESS the record is being cancelled - in which case we only care about condition #1
+				// OR
+				//2. The order is not backordered AND the course is not being cancelled
 				$courses = $this->getCourseIDs($order['details']['BT']->customer_note);
 				if(in_array($record->course, $courses)) {
 					$orders_with_this_course[] = $order_id;
 					$order_to_return = $order;
-				} elseif(empty($orders_with_this_course) && !$record->cancelled && $order['details']['BT']->order_status != 'B' && (!$order_to_return || $order_ship_date < strtotime($this->getShipDate($order['details']['BT']->customer_note)))) {
+				} elseif(!$order_to_return && !$record->cancelled && $order['details']['BT']->order_status != 'B') {
 					$order_to_return = $order;
-					$order_ship_date = strtotime($this->getShipDate($order['details']['BT']->customer_note));
 				}
 			}
 			if(count($orders_with_this_course) > 1) {
@@ -461,17 +411,13 @@ class IttImportModelUpload extends JModel {
 			if($order_to_return) return $order_to_return;
 		}
 
-		//if we haven't found an order yet and the record is cancelled, we need to perform some extra checks
+		//if we haven't found an order yet and the record is cancelled, we need to check for an already-shipped order
 		if($record->cancelled) {
-			//check for a shipped or backordered order
 			$sql = 'SELECT virtuemart_order_id
 			 FROM #__virtuemart_orders
 			 WHERE order_status="S"
 			   AND virtuemart_user_id='.$this->_db->quote($record->studentid).'
-			   AND (
-			   		customer_note LIKE "%[[SHIP_DATE: '.$record->course_start_date.']]%"
-			   		OR customer_note LIKE "%[[SHIP_DATE: '.$record->term_date.']]%"
-			   )
+			   AND customer_note LIKE "%[[SHIP_DATE: '.$record->course_start_date.']]%"
 			 ORDER BY virtuemart_order_id';
 			$this->_db->setQuery($sql);
 			$this->_db->query();
@@ -513,6 +459,7 @@ class IttImportModelUpload extends JModel {
 			return $this->createOrder($record);
 		}
 
+		//the record is cancelled and we were unable to locate an existing order with this course. Return false.
 		return false;
 	}
 
@@ -612,48 +559,43 @@ class IttImportModelUpload extends JModel {
 
 			//iterate through all of the products
 			foreach($record->productids as $productid) {
-				//do not add any products to the order if they are in the exclude category
-				//if(!in_array($productid, $this->products_to_exclude)) {
-					$has_product = false;
-					foreach($record->order['items'] as $item) {
-						if($item->virtuemart_product_id == $productid) {
-							$has_product = true;
-							break;
-						}
+				$has_product = false;
+				foreach($record->order['items'] as $item) {
+					if($item->virtuemart_product_id == $productid) {
+						$has_product = true;
+						break;
 					}
+				}
 
-					if($has_product) {
-						$statuses[] = 'updated';
+				if($has_product) {
+					$statuses[] = 'updated';
+					$details[] = 'Order <a href="'.$this->getOrderUrl($record->order_id).'">'.$record->order_id.'</a>';
+				} else {
+					//we have to add the product
+					$productModel = VmModel::getModel('product');
+					$product = $productModel->getProduct($productid);
+					if(isset($product->virtuemart_order_item_id)) unset($product->virtuemart_order_item_id);
+					$product->virtuemart_order_id = $record->order_id;
+					$product->order_status = $record->order['details']['BT']->order_status;
+					$product->product_quantity = $product->quantity;
+					$product->order_item_sku = $product->product_sku;
+					$product->order_item_name = $product->product_name;
+					$result = $orderModel->saveOrderLineItem($product);
+					if($result !== true) {
+						$detailstring = 'Failed to add product '.$productid.' to order with ID <a href="'.$this->getOrderUrl($record->order_id).'">'.$record->order_id.'</a>';
+						if(is_string($result)) $detailstring.': '.$result;
+						$details[] = $detailstring;
+						$statuses[] = 'errored';
 					} else {
-						//we have to add the product
-						$productModel = VmModel::getModel('product');
-						$product = $productModel->getProduct($productid);
-						if(isset($product->virtuemart_order_item_id)) unset($product->virtuemart_order_item_id);
-						$product->virtuemart_order_id = $record->order_id;
-						$product->order_status = $record->order['details']['BT']->order_status;
-						$product->product_quantity = $product->quantity;
-						$product->order_item_sku = $product->product_sku;
-						$product->order_item_name = $product->product_name;
-						$result = $orderModel->saveOrderLineItem($product);
-						if($result !== true) {
-							$detailstring = 'Failed to add product '.$productid.' to order with ID <a href="'.$this->getOrderUrl($record->order_id).'">'.$record->order_id.'</a>';
-							if(is_string($result)) $detailstring.': '.$result;
-							$details[] = $detailstring;
-							$statuses[] = 'errored';
-						} else {
-							//now we need to update the stock inventory
-//$productModel->updateStockInDB($product, 1, '=', '+');
-//$this->products[$productid]['product_ordered']++;
-							$statuses[] = 'added';
-							$details[] = 'Added product '.$productid.' to order wtih ID <a href="'.$this->getOrderUrl($record->order_id).'">'.$record->order_id.'</a>';
-							$record->order['items'][] = $product;
-						}
+						$statuses[] = 'added';
+						$details[] = 'Added product '.$productid.' to order wtih ID <a href="'.$this->getOrderUrl($record->order_id).'">'.$record->order_id.'</a>';
+						$record->order['items'][] = $product;
 					}
-				//}
+				}
 			}
 
 			$customer_note = $record->order['details']['BT']->customer_note;
-			$this->saveCourseId($record->course, $record->course_start_date, $customer_note);
+			$this->saveCourseId($record->course, $customer_note);
 			if(in_array('added',$statuses)) {
 				$history_comment = 'Course '.$record->course.' added to order from file '.$record->filename;
 			} else {
@@ -722,7 +664,6 @@ class IttImportModelUpload extends JModel {
 						if($orderModel->removeOrderLineItem($order_product->virtuemart_order_item_id)) {
 							$orderModel->handleStockAfterStatusChangedPerProduct('X', $order_product->order_status,$order_product, $order_product->product_quantity);
 							unset($record->order['items'][$order_cursor]);
-//$this->products[$productid]['product_ordered']--;
 							$statuses[] = 'cancelled';
 							$details[] = 'Removed product '.$productid.' from order <a href="'.$this->getOrderUrl($record->order_id).'">'.$record->order_id.'</a>';
 							$record_was_cancelled = true;
@@ -739,7 +680,7 @@ class IttImportModelUpload extends JModel {
 			}
 			if($record_was_cancelled) {
 				$customer_note = $record->order['details']['BT']->customer_note;
-				$this->removeCourseId($record->course, $record->course_start_date, $customer_note);
+				$this->removeCourseId($record->course, $customer_note);
 				$history_comment = 'Course '.$record->course.' removed from order by file '.$record->filename;
 				$data = array('customer_note'=>$customer_note, 'customer_notified' => 0, 'comments' => $history_comment);
 				if(empty($record->order['items'])) {
@@ -767,24 +708,19 @@ class IttImportModelUpload extends JModel {
 		$has_ship_date = preg_match('/\[\[SHIP_DATE\: ((0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(20[1-2][0-9]))\]/',$string,$matches);
 		return $has_ship_date?$matches[1]:'';
 	}
-
 	private function getCourseIDs($string) {
 		$has_course = preg_match_all('/\[\[COURSE_NUMBER\: ([A-Za-z0-9 ]*)\]/',$string,$matches);
 		return ($has_course)?$matches[1]:array();
 	}
-	private function removeCourseId($course, $startdate, &$string) {
-		$course_string = "[[COURSE_NUMBER: $course][COURSE_START_DATE: $startdate]]";
-		if(strpos($string, $course_string) !== false) {
-			$string = str_replace($course_string,"",$string);
-		}
+	private function removeCourseId($course, &$string) {
+		$string = preg_replace('/\[\[COURSE_NUMBER\: '.$course.'\](\[COURSE_START_DATE\: ((0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(20[1-2][0-9]))\])?\]/','',$string);
 	}
-	private function saveCourseId($course, $startdate, &$string) {
-		$course_string = "[[COURSE_NUMBER: $course][COURSE_START_DATE: $startdate]]";
-		if(strpos($string, $course_string) === false) {
+	private function saveCourseId($course, &$string) {
+		if(strpos($string, "[[COURSE_NUMBER: $course]") === false) {
 			if(empty($string)) {
-				$string = $course_string;
+				$string = "[[COURSE_NUMBER: $course]]";
 			} else {
-				$string .= "\n$course_string";
+				$string .= "\n[[COURSE_NUMBER: $course]]";
 			}
 		}
 	}
@@ -908,12 +844,6 @@ class IttImportModelUpload extends JModel {
 	private function createOrder($record, $status = null) {
 		if(empty($record->vmuser)) return 'Virtuemart User needed';
 
-		$ship_date = $record->term_date;
-		foreach($record->productids as $productid) {
-			if($this->products[$productid]['high_cost_item']==1) $ship_date = $record->course_start_date;
-		}
-		if(strtotime($ship_date) < $this->ship_cutoff) $ship_date = $record->course_start_date; //if we are already past the shipping cutoff date, use the course_start_date instead
-
 		$session = JFactory::getSession();
 		$session->set('user',JFactory::getUser($record->studentid));
 		$cart = VirtueMartCart::getCart();
@@ -935,8 +865,8 @@ class IttImportModelUpload extends JModel {
 		//$cart->virtuemart_shipmentmethod_id=1;	//$cart->CheckAutomaticSelectedShipment($cart_prices,true);
 		$cart->setCartIntoSession();
 		$cart->customer_comment = '';
-		$this->saveShipDate($ship_date, $cart->customer_comment);
-		$this->saveCourseId($record->course, $record->course_start_date, $cart->customer_comment);
+		$this->saveShipDate($record->course_start_date, $cart->customer_comment);
+		$this->saveCourseId($record->course, $cart->customer_comment);
 
 		$orderModel = VmModel::getModel('orders');
 		if (($orderID = $orderModel->createOrderFromCart($cart)) === false) {
@@ -1106,12 +1036,6 @@ class IttImportModelUpload extends JModel {
 		return $this->itt_date_transform($value);
 	}
 	private function course_start_date_validate($value) {
-		return preg_match('/^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/201[3-9]$/', $value);
-	}
-	private function term_date_transform($value) {
-		return $this->itt_date_transform($value);
-	}
-	private function term_date_validate($value) {
 		return preg_match('/^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/201[3-9]$/', $value);
 	}
 	private function cancelled_transform($value) {

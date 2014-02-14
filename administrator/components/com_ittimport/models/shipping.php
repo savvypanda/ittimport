@@ -5,14 +5,13 @@ jimport('joomla.application.component.model');
 
 if(!class_exists( 'VmConfig' )) require JPATH_ADMINISTRATOR.'/components/com_virtuemart/helpers/config.php';
 if(!class_exists('VirtueMartModelOrders')) require(JPATH_VM_ADMINISTRATOR.'/models/orders.php');
-//vim ittimp	if(!class_exists('VirtuemartModelUser')) require_once(JPATH_VM_ADMINISTRATOR.DS.'models'.DS.'user.php');
 if(!class_exists('VirtueMartCart')) require_once(JPATH_VM_SITE.DS.'helpers'.DS.'cart.php');
 
 
-	/*
-	 * IttImport Shipping model
-	 *
-	 */
+/*
+ * IttImport Shipping model
+ *
+ */
 class IttImportModelShipping extends JModel {
 	//cache variable. For each start date it stores whether or not it is within our shipping date range
 	private $startdates = array();
@@ -312,18 +311,16 @@ class IttImportModelShipping extends JModel {
 
 	private function _createBackorderForItem($order, $order_item) {
 		$ship_date = $this->_getShipDate($order->customer_note);
-		$course = $course_start_date = '';
+		$course = '';
 		$order_courses = $this->getCourseIDs($order->customer_note);
 		$matched_courses = 0;
-		foreach($order_courses as $name => $start) {
+		foreach($order_courses as $name) {
 			if(strpos($order_item->order_item_name,$name) !== FALSE) {
 				$course = $name;
-				$course_start_date = $start;
 				$matched_courses++;
 			}
 		}
-		if($matched_courses > 1) $course = $course_start_date = '';
-		if(!empty($course) && empty($course_start_date)) $course_start_date=date('m/d/Y');
+		if($matched_courses > 1) $course = '';
 
 		$session = JFactory::getSession();
 		$session->set('user',JFactory::getUser($order->virtuemart_user_id));
@@ -355,7 +352,7 @@ class IttImportModelShipping extends JModel {
 
 		$cart->customer_comment = '';
 		if(!empty($ship_date)) $this->saveShipDate($ship_date, $cart->customer_comment);
-		if(!empty($course)) $this->saveCourseId($course, $course_start_date, $cart->customer_comment);
+		if(!empty($course)) $this->saveCourseId($course, $cart->customer_comment);
 		$cart->customer_comment .= "\nThis order was created as a backorder from order <a href=\"".$this->getOrderUrl($order->virtuemart_order_id).'">'.$this->getOrderUrl($order->virtuemart_order_id).'</a>';
 
 		$orderModel = VmModel::getModel('orders');
@@ -398,25 +395,19 @@ class IttImportModelShipping extends JModel {
 		}
 	}
 	private function getCourseIDs($string) {
-		$has_course = preg_match_all('/\[\[COURSE_NUMBER\: ([A-Za-z0-9 ]*)\](?:\[COURSE_START_DATE: (\d{2}\/\d{2}\/\d{4})\])?/',$string,$matches);
+		$has_course = preg_match_all('/\[\[COURSE_NUMBER\: ([A-Za-z0-9 ]*)\](?:\[COURSE_START_DATE: (\d{2}\/\d{2}\/\d{4})?\])?/',$string,$matches);
 		if($has_course) {
-			$courses = array();
-			$num_matches = count($matches[1]);
-			for($i=0; $i<$num_matches; $i++) {
-				$courses[$matches[1][$i]] = $matches[2][$i];
-			}
-			return $courses;
+			return $matches[1];
 		} else {
 			return array();
 		}
 	}
-	private function saveCourseId($course, $startdate, &$string) {
-		$course_string = "[[COURSE_NUMBER: $course][COURSE_START_DATE: $startdate]]";
-		if(strpos($string, $course_string) === false) {
+	private function saveCourseId($course, &$string) {
+		if(strpos($string, "[[COURSE_NUMBER: $course]") === false) {
 			if(empty($string)) {
-				$string = $course_string;
+				$string = "[[COURSE_NUMBER: $course]]";
 			} else {
-				$string .= "\n$course_string";
+				$string .= "\n[[COURSE_NUMBER: $course]]";
 			}
 		}
 	}

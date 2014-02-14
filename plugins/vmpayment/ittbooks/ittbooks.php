@@ -6,9 +6,7 @@ if(!class_exists('VirtueMartModelOrders')) require(JPATH_VM_ADMINISTRATOR.'/mode
 
 class plgVmPaymentIttbooks extends vmPSPlugin {
 	private $newnote = '';
-	//private $cron_username, $cron_shipper;
 	private $badcountries = array();
-	//private $virtual_categories = array();
 	private $products_to_ignore = array();
 
 	function __construct(&$subject, $config) {
@@ -22,7 +20,6 @@ class plgVmPaymentIttbooks extends vmPSPlugin {
 
 		$db = JFactory::getDbo();
 
-		//getting the cron users
 		$ittimport_params = JComponentHelper::getParams('com_ittimport');
 		$virtual_categories = explode(',',str_replace(' ','',$ittimport_params->get('virtual_product_category','')));
 		$num_virtual_categories = count($virtual_categories);
@@ -143,7 +140,6 @@ class plgVmPaymentIttbooks extends vmPSPlugin {
 	function plgVmOnUpdateSingleItem($old_data, $new_data) {
 		//if(isset($new_data->virtuemart_paymentmethod_id)) return NULL; //we do not want to run this code if the entire order is being updated, since that will happen in the plgVmOnUpdateOrderPayment method
 		if($new_data->order_status == $old_data->order_status) return NULL; //we do not want to do anything if the status is not changing
-		//if($new_data->order_status != 'T' && $old_data->order_status != 'X' && $old_data->order_status != 'M') return NULL; //we are only interested in orders that need to be returned, are cancelled, or require manager approval
 
 		$db = JFactory::getDbo();
 		$query = 'SELECT virtuemart_paymentmethod_id, virtuemart_user_id FROM #__virtuemart_orders WHERE virtuemart_order_id='.$db->quote($new_data->virtuemart_order_id);
@@ -198,11 +194,10 @@ class plgVmPaymentIttbooks extends vmPSPlugin {
 
 		//we want to update the address on all other "current" orders for this user.
 		//Waiting for approval, duplicate, pending, ready to be shipped, invalid address, and backordered
-		$updatable_statuses = array('M'=>'"M"','D'=>'"D"','P'=>'"P"','C'=>'"C"','A'=>'"A"','B'=>'"B"');
 		$query = 'SELECT u.*, o.*
 			 FROM #__virtuemart_orders o
 			 JOIN #__virtuemart_order_userinfos u ON u.virtuemart_order_id=o.virtuemart_order_id
-			 WHERE o.order_status IN ('.implode(',',$updatable_statuses).')
+			 WHERE o.order_status IN ("M","D","P","C","A","B")
 			   AND o.virtuemart_user_id='.$db->quote($vmuser->virtuemart_user_id).'
 			   AND u.address_type = "BT"
 			 ORDER BY o.virtuemart_order_id';
@@ -265,7 +260,7 @@ class plgVmPaymentIttbooks extends vmPSPlugin {
 		}
 
 		//1. check for duplicate
-		//Skip if it is a manager or the cron shipper (managers are allowed to submit duplicates)
+		//Skip if it is a manager or the cron shipper
 		if(!$is_manager && !$is_auto_shipping) {
 			//cancel the item and do not update the order status if it is the batch import.
 			//otherwise do not cancel the item but do update the order status
@@ -320,8 +315,6 @@ class plgVmPaymentIttbooks extends vmPSPlugin {
 		foreach($order['items'] as $i) if($i->virtuemart_product_id && !in_array($i->order_status, $statuses_to_ignore) && !in_array($i->virtuemart_product_id, $this->products_to_ignore)) $productids[] = $i->virtuemart_product_id;
 		if(empty($productids) || !is_object($order['details']['BT'])) return false;
 
-		//preg_match('/\[\[SHIP_DATE\: (\d{2}\/\d{2}\/\d{4})\]\]/', $order['details']['BT']->customer_note, $match);
-		//$ship_date = !empty($match[1])?$match[1]:'';
 		$sql = 'SELECT DISTINCT o.*, i.virtuemart_product_id, i.order_item_name
 			  FROM #__virtuemart_orders o
 			  JOIN #__virtuemart_order_items i ON i.virtuemart_order_id=o.virtuemart_order_id

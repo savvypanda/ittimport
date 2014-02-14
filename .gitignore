@@ -8,13 +8,10 @@
 
 # Do not ignore the ittimport component
 !components/
-!components/*
 !components/com_ittimport/
 !components/com_ittimport/*
 !administrator/
-!administrator/*
 !administrator/components/
-!administrator/components/*
 !administrator/components/com_ittimport/
 !administrator/components/com_ittimport/*
 !administrator/components/com_ittimport/controllers
@@ -48,7 +45,6 @@
 !cli/
 !cli/ittimport_cron.php
 !media/
-!media/*
 !media/com_ittimport/
 !media/com_ittimport/*
 !media/com_ittimport/images/
@@ -56,7 +52,6 @@
 
 # Do not ignore the specialized template and template overrides
 !administrator/templates/
-!administrator/templates/*
 !administrator/templates/ITTBooksAdmin/
 !administrator/templates/ITTBooksAdmin/*
 !administrator/templates/ITTBooksAdmin/css/
@@ -111,16 +106,13 @@
 # !administrator/templates/ITTBooksAdmin/language/en-GB/*
 
 # Do not ignore the virtuemart plugin
+!plugins/
 !plugins/vmpayment/
-!plugins/vmpayment/*
 !plugins/vmpayment/ittbooks/
 !plugins/vmpayment/ittbooks/*
 
 # Do not ignore the readonly plugin
-!plugins/
-!plugins/*
 !plugins/system/
-!plugins/system/*
 !plugins/system/readonly/
 !plugins/system/readonly/*
 
@@ -132,15 +124,3 @@
 !administrator/components/com_virtuemart/core_mods.txt
 !administrator/components/com_vminvoice/
 !administrator/components/com_vminvoice/core_mods.txt
-
-# Ignore miscellaneous index.html and index.php files
-administrator/error_log
-administrator/index.html
-administrator/index.php
-administrator/components/index.html
-administrator/templates/index.html
-components/index.html
-media/index.html
-plugins/index.html
-plugins/system/index.html
-plugins/vmpayment/index.html
