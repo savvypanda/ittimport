@@ -474,7 +474,7 @@ class IttImportModelUpload extends JModel {
 		$userstate = $this->get_state_id_from_code($usercountry, $record->state);
 		//zip code for the USA should be 0-padded to 5 digits
 		if($usercountry == $this->vcountries['USA'] && !empty($record->zip) && strlen($record->zip) < 5) {
-			$record->zip = strpad($record->zip, 5, '0', STR_PAD_LEFT);
+			$record->zip = str_pad($record->zip, 5, '0', STR_PAD_LEFT);
 		}
 
 		$addressparts = array();
